@@ -1,26 +1,16 @@
 "use client";
 import { Button } from "../Components/Button/button";
+import { ActiveAction } from "../page";
 
 type HeaderProps = {
-  isLiveTrace: boolean;
-  isResetTrace: boolean;
-  isExportJson: boolean;
-  isDeployFix: boolean;
-  onToggleLiveTrace: () => void;
-  onResetTrace: () => void;
-  onExportJson: () => void;
-  onDeployFix: () => void;
+  activeAction: ActiveAction;
+  onChangeActiveAction: (action: ActiveAction) => void;
 };
-export const Header = (props: HeaderProps) => {
-  const {
-    isLiveTrace,
-    isResetTrace,
-    isExportJson,
-    onToggleLiveTrace,
-    onResetTrace,
-    onExportJson,
-    onDeployFix,
-  } = props;
+export const Header = ({ activeAction, onChangeActiveAction }: HeaderProps) => {
+  const isLiveTraceActive = activeAction === "liveTrace";
+  const isResetTraceActive = activeAction === "resetTrace";
+  const isExportJsonActive = activeAction === "exportJson";
+  const isDeployFixActive = activeAction === "deployFix";
 
   return (
     <header className="flex items-center justify-between px-6 py-4 border-b border-slate-800/80 bg-slate-950/80 backdrop-blur">
@@ -48,30 +38,31 @@ export const Header = (props: HeaderProps) => {
 
       <div className="flex items-center gap-3 text-[11px]">
         <Button
-          onClick={onToggleLiveTrace}
+          onClick={() => onChangeActiveAction("liveTrace")}
           className=" flex items-center gap-2 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-50 shadow-md shadow-rose-500/40"
-          isActive={isLiveTrace}
+          isActive={isLiveTraceActive}
         >
           <span className="h-2 w-2 rounded-full bg-rose-300 shadow-[0_0_8px_rgba(248,113,113,0.9)]" />
           Live Trace
         </Button>
         <Button
-          onClick={onResetTrace}
+          onClick={() => onChangeActiveAction("resetTrace")}
           className="observatory-chip px-3 py-1.5 text-[10px] font-medium uppercase tracking-[0.18em] text-slate-300 hover:text-slate-50"
-          isActive={isResetTrace}
+          isActive={isResetTraceActive}
         >
           Reset Trace
         </Button>
         <Button
-          onClick={onExportJson}
+          onClick={() => onChangeActiveAction("exportJson")}
           className="observatory-chip px-3 py-1.5 text-[10px] font-medium uppercase tracking-[0.18em] text-slate-300 hover:text-slate-50"
-          isActive={isExportJson}
+          isActive={isExportJsonActive}
         >
           Export JSON
         </Button>
         <Button
-          onClick={onDeployFix}
+          onClick={() => onChangeActiveAction("deployFix")}
           className="observatory-pill-accent px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-950 shadow-lg shadow-sky-500/40"
+          isActive={isDeployFixActive}
         >
           Deploy Fix
         </Button>
