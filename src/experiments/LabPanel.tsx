@@ -13,32 +13,15 @@ import { createContext, memo, useContext, useMemo, useState } from "react";
 const btn =
   "rounded bg-sky-700 px-3 py-1.5 text-xs text-white hover:bg-sky-600 transition-colors";
 
-function SectionHeader({
-  hook,
-  title,
-  description,
-  watch,
-}: {
-  hook: string;
-  title: string;
-  description: string;
-  watch: string;
-}) {
-  return (
-    <div className="mb-2">
-      <div className="flex items-center gap-2">
-        <span className="rounded bg-sky-900/80 px-1.5 py-0.5 text-[10px] font-semibold text-sky-300">
-          {hook}
-        </span>
-        <span className="text-[12px] font-semibold text-slate-200">{title}</span>
-      </div>
-      <p className="mt-1 text-[11px] text-slate-400">{description}</p>
-      <p className="mt-0.5 text-[11px] text-emerald-400/80">
-        Watch: {watch}
-      </p>
-    </div>
-  );
-}
+const tabs = [
+  { id: "state", label: "useState" },
+  { id: "reducer", label: "useReducer" },
+  { id: "effect", label: "useEffect" },
+  { id: "context", label: "useContext" },
+  { id: "memo", label: "useMemo" },
+] as const;
+
+type TabId = (typeof tabs)[number]["id"];
 
 function CounterStateInner() {
   const [count, setCount] = useTrackedState("CounterState", "count", 0);
@@ -149,82 +132,97 @@ function MemoInner() {
 }
 const MemoDemo = withRenderTracker(MemoInner, "MemoDemo");
 
-export function LabPanel() {
-  const [theme, setTheme] = useTrackedState<"light" | "dark">("ThemeProvider", "theme", "light");
+const experimentInfo: Record<TabId, { description: string; watch: string }> = {
+  state: {
+    description:
+      "Clicking +1 or -1 calls setState. This causes CounterState to re-render.",
+    watch:
+      'Timeline: blue "state" block (setState call) then amber "render" block (re-render).',
+  },
+  reducer: {
+    description:
+      'dispatch("inc") sends an action to the reducer. The reducer computes next state. Component re-renders.',
+    watch:
+      'Timeline: purple "reducer" block (dispatch + transition) then amber "render" block.',
+  },
+  effect: {
+    description:
+      "Typing updates state (query). The effect depends on [query], so it runs after every render where query changed.",
+    watch:
+      'Timeline per keystroke: blue "state" -> amber "render" -> green "effect". Three events.',
+  },
+  context: {
+    description:
+      "Toggling theme updates the context value. ThemeReader consumes it via useContext and re-renders.",
+    watch:
+      'Timeline: blue "state" -> pink "context" (detected change) -> amber "render".',
+  },
+  memo: {
+    description:
+      'ExpensiveList does heavy work. With memo OFF it re-renders on any parent state change. With memo ON (toggle in Runtime Controls) React.memo skips it if props didn\'t change.',
+    watch:
+      'Click "unrelated state change" with memo OFF vs ON. Compare ExpensiveList render counts in Components panel.',
+  },
+};
+
+function ContextExperiment() {
+  const [theme, setTheme] = useTrackedState<"light" | "dark">(
+    "ThemeProvider",
+    "theme",
+    "light"
+  );
 
   return (
-    <div className="observatory-panel-subtle rounded-lg border border-slate-700/60 px-4 py-4 space-y-5">
-      <div>
-        <p className="text-[13px] font-semibold text-slate-100">Hook Lab</p>
-        <p className="mt-1 text-[11px] text-slate-400">
-          Each section below uses a different React hook. Click the buttons, then look at the
-          Timeline (colored blocks), Components panel (render counts), and Event Summary (counters)
-          to see exactly what React did.
-        </p>
+    <ThemeContext.Provider value={theme}>
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          className={btn}
+          onClick={() => setTheme((t) => (t === "light" ? "dark" : "light"))}
+        >
+          toggle theme
+        </button>
+        <ThemeReader />
+      </div>
+    </ThemeContext.Provider>
+  );
+}
+
+export function LabPanel() {
+  const [activeTab, setActiveTab] = useState<TabId>("state");
+  const info = experimentInfo[activeTab];
+
+  return (
+    <div className="observatory-panel-subtle shrink-0 rounded-lg border border-slate-700/60">
+      <div className="flex items-center gap-1 border-b border-slate-800/60 px-3 pt-2">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => setActiveTab(tab.id)}
+            className={`rounded-t px-3 py-1.5 text-[11px] font-medium transition-colors ${
+              activeTab === tab.id
+                ? "bg-sky-900/60 text-sky-300 border-b-2 border-sky-400"
+                : "text-slate-500 hover:text-slate-300"
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+        <span className="ml-auto text-[10px] text-slate-500">Hook Lab</span>
       </div>
 
-      <div className="border-t border-slate-800/60 pt-4">
-        <SectionHeader
-          hook="useState"
-          title="Counter with local state"
-          description="Clicking +1 or -1 calls setState. This causes CounterState to re-render."
-          watch="Timeline shows a blue 'state' block (the setState call) and an amber 'render' block (the re-render it caused)."
-        />
-        <CounterState />
-      </div>
+      <div className="px-4 py-3 space-y-2">
+        <p className="text-[11px] text-slate-400">{info.description}</p>
+        <p className="text-[11px] text-emerald-400/80">Watch: {info.watch}</p>
 
-      <div className="border-t border-slate-800/60 pt-4">
-        <SectionHeader
-          hook="useReducer"
-          title="Counter with reducer"
-          description='dispatch("inc") sends an action to the reducer function. The reducer computes the next state. The component re-renders with the new value.'
-          watch='Timeline shows a purple "reducer" block with the action and state transition, then an amber "render" block.'
-        />
-        <ReducerCounter />
-      </div>
-
-      <div className="border-t border-slate-800/60 pt-4">
-        <SectionHeader
-          hook="useEffect"
-          title="Effect triggered by dependency"
-          description="Typing in the input updates state (query). The effect depends on [query], so it runs after every render where query changed."
-          watch='Timeline shows: blue "state" (query changed) -> amber "render" (re-render) -> green "effect" (effect ran). Three events per keystroke.'
-        />
-        <EffectDemo />
-      </div>
-
-      <div className="border-t border-slate-800/60 pt-4">
-        <SectionHeader
-          hook="useContext"
-          title="Context provider and consumer"
-          description='Toggling the theme updates the context value. ThemeReader consumes it via useContext and re-renders when it changes.'
-          watch='Timeline shows: blue "state" (theme changed in provider) -> pink "context" (ThemeReader detected the change) -> amber "render" (ThemeReader re-rendered).'
-        />
-        <ThemeContext.Provider value={theme}>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              className={btn}
-              onClick={() => setTheme((t) => (t === "light" ? "dark" : "light"))}
-            >
-              toggle theme
-            </button>
-            <ThemeReader />
-          </div>
-        </ThemeContext.Provider>
-      </div>
-
-      <div className="border-t border-slate-800/60 pt-4">
-        <SectionHeader
-          hook="useMemo + React.memo"
-          title="Memoization experiment"
-          description={
-            'ExpensiveList does heavy work. With memoization OFF, it re-renders even when only "unrelated" state changes. ' +
-            "With memoization ON (toggle in Runtime Controls below), React.memo skips the re-render if its props didn't change."
-          }
-          watch='Click "unrelated state change" with memo OFF: ExpensiveList renders. Toggle Memoization ON, click again: ExpensiveList does NOT render. Compare render counts in the Components panel.'
-        />
-        <MemoDemo />
+        <div className="pt-1">
+          {activeTab === "state" && <CounterState />}
+          {activeTab === "reducer" && <ReducerCounter />}
+          {activeTab === "effect" && <EffectDemo />}
+          {activeTab === "context" && <ContextExperiment />}
+          {activeTab === "memo" && <MemoDemo />}
+        </div>
       </div>
     </div>
   );

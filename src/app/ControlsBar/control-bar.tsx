@@ -37,66 +37,46 @@ export function BottomControlsBar() {
       ? 0
       : Math.max(...events.map((e) => e.timestamp)) - Math.min(...events.map((e) => e.timestamp));
   const totalRenders = events.filter((e) => e.type === "render").length;
-  const totalStateTransitions = events.filter((e) => e.type === "state").length;
+  const totalStateChanges = events.filter((e) => e.type === "state").length;
 
   return (
-    <section className="mt-3 flex gap-3">
-      <div className="flex flex-1 gap-3">
-        <div className="observatory-metric-card flex flex-1 flex-col justify-between px-4 py-3">
-          <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-slate-400">
-            Render Events
+    <section className="mt-2 flex items-stretch gap-2">
+      <div className="flex flex-1 gap-2">
+        <div className="observatory-metric-card flex flex-1 items-center justify-between px-3 py-2">
+          <span className="text-[9px] font-medium uppercase tracking-[0.15em] text-slate-400">
+            Renders
           </span>
-          <div className="mt-3 flex items-end gap-2">
-            <span className="text-2xl font-semibold text-amber-300">{totalRenders}</span>
-            <span className="pb-1 text-[11px] text-slate-400">count</span>
+          <span className="text-lg font-semibold text-amber-300">{totalRenders}</span>
+        </div>
+        <div className="observatory-metric-card flex flex-1 items-center justify-between px-3 py-2">
+          <span className="text-[9px] font-medium uppercase tracking-[0.15em] text-slate-400">
+            Trace span
+          </span>
+          <div className="flex items-baseline gap-1">
+            <span className="text-lg font-semibold text-amber-300">{renderTimeMs}</span>
+            <span className="text-[9px] text-slate-400">ms</span>
           </div>
         </div>
-        <div className="observatory-metric-card flex flex-1 flex-col justify-between px-4 py-3">
-          <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-slate-400">
-            Render Time
+        <div className="observatory-metric-card flex flex-1 items-center justify-between px-3 py-2">
+          <span className="text-[9px] font-medium uppercase tracking-[0.15em] text-slate-400">
+            State changes
           </span>
-          <div className="mt-3 flex items-end gap-2">
-            <span className="text-2xl font-semibold text-amber-300">{renderTimeMs}</span>
-            <span className="pb-1 text-[11px] text-slate-400">ms</span>
-          </div>
-        </div>
-        <div className="observatory-metric-card flex flex-1 flex-col justify-between px-4 py-3">
-          <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-slate-400">
-            State Transitions
-          </span>
-          <div className="mt-3 flex items-end gap-2">
-            <span className="text-2xl font-semibold text-sky-300">{totalStateTransitions}</span>
-            <span className="pb-1 text-[11px] text-slate-400">count</span>
-          </div>
+          <span className="text-lg font-semibold text-sky-300">{totalStateChanges}</span>
         </div>
       </div>
 
-      <div className="observatory-panel-subtle flex w-[300px] flex-col justify-between px-4 py-3">
-        <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-slate-400">
-          Runtime Controls
+      <div className="observatory-panel-subtle flex items-center gap-4 px-3 py-2">
+        <span className="text-[9px] font-medium uppercase tracking-[0.15em] text-slate-400">
+          Controls
         </span>
-        <div className="mt-3 space-y-2 text-[11px]">
-          <div className="flex items-center justify-between">
-            <span className={controls.memoization ? "text-slate-200" : "text-slate-400"}>
-              Memoization
-            </span>
-            <Toggle
-              value={controls.memoization}
-              onChange={(value) => setControl("memoization", value)}
-            />
-          </div>
-          <div className="flex items-center justify-between">
-            <span className={controls.strictMode ? "text-slate-200" : "text-slate-400"}>
-              Strict Mode (label only)
-            </span>
-            <Toggle value={controls.strictMode} onChange={(value) => setControl("strictMode", value)} />
-          </div>
-          <div className="flex items-center justify-between">
-            <span className={controls.throttling ? "text-slate-200" : "text-slate-400"}>
-              Throttling (label only)
-            </span>
-            <Toggle value={controls.throttling} onChange={(value) => setControl("throttling", value)} />
-          </div>
+        <div className="flex items-center gap-1.5 text-[10px]">
+          <span className={controls.memoization ? "text-slate-200" : "text-slate-500"}>
+            Memo
+          </span>
+          <Toggle
+            value={controls.memoization}
+            onChange={(v) => setControl("memoization", v)}
+          />
         </div>
       </div>
     </section>
