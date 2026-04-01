@@ -50,7 +50,9 @@ export function StateAndCacheGraph() {
                   <p className="mt-0.5 text-slate-400 truncate">{lastEvent.label}</p>
                 </>
               ) : (
-                <p className="text-slate-500">Click a button in Hook Lab.</p>
+                <p className="text-slate-500">
+                  Events will show here after you interact with the Hook Lab.
+                </p>
               )}
             </div>
 

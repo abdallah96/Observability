@@ -53,7 +53,10 @@ export function Sidebar() {
 
         <div className="flex-1 overflow-auto px-3 py-2">
           {entries.length === 0 ? (
-            <p className="text-[10px] text-slate-500">No events yet.</p>
+            <div className="mt-2 space-y-1.5 text-[10px] text-slate-500">
+              <p>Components will appear here as they render.</p>
+              <p className="text-slate-600">Use the Hook Lab to trigger events.</p>
+            </div>
           ) : (
             <ul className="space-y-1 text-[11px] font-mono text-slate-300">
               {entries.map(([name, count]) => {

@@ -55,9 +55,19 @@ export function RenderTimeline() {
             </div>
 
             {filtered.length === 0 ? (
-              <p className="mt-3 text-[10px] text-slate-500">
-                No events yet. Use the Hook Lab below.
-              </p>
+              <div className="mt-6 flex flex-col items-center gap-3 text-center">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-sky-900/50 text-lg">
+                  ↓
+                </div>
+                <p className="text-[12px] font-medium text-slate-300">
+                  Start in the Hook Lab below
+                </p>
+                <p className="max-w-[280px] text-[11px] text-slate-500">
+                  Pick a hook tab (useState, useReducer, etc.), click a button,
+                  then watch this timeline fill with color-coded events showing
+                  exactly what React did.
+                </p>
+              </div>
             ) : (
               <div className="mt-1 flex flex-col gap-0.5">
                 {filtered.map((event) => {
