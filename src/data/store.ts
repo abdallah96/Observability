@@ -1,18 +1,46 @@
 import { create } from "zustand";
 
-/** One render event: which component rendered and when. */
-export type RenderEvent = {
+export type EventType = "render" | "state" | "reducer" | "effect" | "context";
+
+export type RuntimeEvent = {
   id: string;
+  type: EventType;
   componentName: string;
-  timestamp: number; // Date.now()
+  label: string;
+  timestamp: number;
+};
+
+type RuntimeControls = {
+  memoization: boolean;
+  strictMode: boolean;
+  throttling: boolean;
+};
+
+type EventFilters = {
+  type: EventType | "all";
+  component: string | "all";
 };
 
 type ObservatoryStore = {
   traceId: string;
-  renderEvents: RenderEvent[];
-  addRenderEvent: (componentName: string) => void;
+  liveTrace: boolean;
+  controls: RuntimeControls;
+  filters: EventFilters;
+  events: RuntimeEvent[];
+  addEvent: (event: Omit<RuntimeEvent, "id" | "timestamp">) => void;
   resetTrace: () => void;
-  getTraceForExport: () => { traceId: string; events: RenderEvent[]; totalMs: number };
+  setLiveTrace: (value: boolean) => void;
+  setControl: (key: keyof RuntimeControls, value: boolean) => void;
+  setFilterType: (value: EventType | "all") => void;
+  setFilterComponent: (value: string | "all") => void;
+  getTraceForExport: () => {
+    traceId: string;
+    liveTrace: boolean;
+    controls: RuntimeControls;
+    filters: EventFilters;
+    events: RuntimeEvent[];
+    totalMs: number;
+  };
 };
 
 function makeId() {
@@ -21,37 +49,73 @@ function makeId() {
 
 export const useObservatoryStore = create<ObservatoryStore>((set, get) => ({
   traceId: makeId(),
-  renderEvents: [],
+  liveTrace: true,
+  controls: {
+    memoization: false,
+    strictMode: false,
+    throttling: false,
+  },
+  filters: {
+    type: "all",
+    component: "all",
+  },
+  events: [],
 
-  addRenderEvent(componentName: string) {
+  addEvent(event) {
+    const { liveTrace } = get();
+    if (!liveTrace) return;
+
     set((state) => ({
-      renderEvents: [
-        ...state.renderEvents,
-        { id: makeId(), componentName, timestamp: Date.now() },
-      ],
+      events: [...state.events, { ...event, id: makeId(), timestamp: Date.now() }],
     }));
   },
 
   resetTrace() {
-    set({ traceId: makeId(), renderEvents: [] });
+    set({ traceId: makeId(), events: [] });
+  },
+
+  setLiveTrace(value) {
+    set({ liveTrace: value });
+  },
+
+  setControl(key, value) {
+    set((state) => ({
+      controls: { ...state.controls, [key]: value },
+    }));
+  },
+
+  setFilterType(value) {
+    set((state) => ({ filters: { ...state.filters, type: value } }));
+  },
+
+  setFilterComponent(value) {
+    set((state) => ({ filters: { ...state.filters, component: value } }));
   },
 
   getTraceForExport() {
-    const { traceId, renderEvents } = get();
-    if (renderEvents.length === 0) {
-      return { traceId, events: [], totalMs: 0 };
+    const { traceId, liveTrace, controls, filters, events } = get();
+    if (events.length === 0) {
+      return { traceId, liveTrace, controls, filters, events: [], totalMs: 0 };
     }
-    const times = renderEvents.map((e) => e.timestamp);
+    const times = events.map((e) => e.timestamp);
     const totalMs = Math.max(...times) - Math.min(...times);
-    return { traceId, events: renderEvents, totalMs };
+    return { traceId, liveTrace, controls, filters, events, totalMs };
   },
 }));
 
-/** Derive render count per component from events. */
-export function getRenderCounts(events: RenderEvent[]): Record<string, number> {
+export function getEventCountsByComponent(
+  events: RuntimeEvent[],
+  filters: EventFilters
+): Record<string, number> {
   const counts: Record<string, number> = {};
-  for (const e of events) {
-    counts[e.componentName] = (counts[e.componentName] ?? 0) + 1;
+
+  for (const event of events) {
+    if (filters.type !== "all" && event.type !== filters.type) continue;
+    if (filters.component !== "all" && event.componentName !== filters.component) {
+      continue;
+    }
+    counts[event.componentName] = (counts[event.componentName] ?? 0) + 1;
   }
+
   return counts;
 }

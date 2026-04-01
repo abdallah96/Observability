@@ -1,23 +1,30 @@
 "use client";
 
 import { useObservatoryStore } from "@/data/store";
-import { ComponentType } from "react";
+import { ComponentType, useEffect } from "react";
 
 /**
- * Wraps a component so each render is logged to the observatory store.
- * Use this on experiment components to see when they re-render in the timeline and sidebar.
+ * Wrap a component to log a "render" event after each commit.
+ * This keeps tracking predictable and avoids store writes during render.
  */
 export function withRenderTracker<P extends object>(
   WrappedComponent: ComponentType<P>,
-  displayName: string
+  componentName: string
 ) {
   function TrackedComponent(props: P) {
-    const addRenderEvent = useObservatoryStore((s) => s.addRenderEvent);
-    addRenderEvent(displayName); // Log every time this component renders
+    const addEvent = useObservatoryStore((s) => s.addEvent);
+
+    useEffect(() => {
+      addEvent({
+        type: "render",
+        componentName,
+        label: "component render",
+      });
+    });
 
     return <WrappedComponent {...props} />;
   }
 
-  TrackedComponent.displayName = `Tracked(${displayName})`;
+  TrackedComponent.displayName = `Tracked(${componentName})`;
   return TrackedComponent;
 }
