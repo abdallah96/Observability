@@ -40,6 +40,5 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-PROJECT.md
-SETUP.md
+# Internal notes (optional local files)
 IDEA.md
